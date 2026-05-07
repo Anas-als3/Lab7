@@ -1,11 +1,8 @@
 package com.example.lab7.Service;
 
-import com.example.lab7.ApiResponse.ApiResponse;
 import com.example.lab7.Model.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.Errors;
 
 import java.util.ArrayList;
 
@@ -20,53 +17,45 @@ public class TeacherService {
 
     private final ArrayList<Teacher> teachers = new ArrayList<>();
 
-    public ResponseEntity<?> getTeachers() {
-        return ResponseEntity.status(200).body(teachers);
+    public ArrayList<Teacher> getTeachers() {
+        return teachers;
     }
 
-    public ResponseEntity<?> addTeacher(Teacher teacher, Errors errors) {
-        if (errors.hasErrors()) {
-            return ResponseEntity.status(400).body(new ApiResponse(errors.getFieldError().getDefaultMessage()));
-        }
-
+    public int addTeacher(Teacher teacher) {
         for (Teacher t : teachers) {
             if (t.getId().equals(teacher.getId())) {
-                return ResponseEntity.status(400).body(new ApiResponse("Teacher id already exists"));
+                return 0;
             }
         }
 
         teachers.add(teacher);
-        return ResponseEntity.status(200).body(new ApiResponse("Teacher added successfully"));
+        return 1;
     }
 
-    public ResponseEntity<?> updateTeacher(String id, Teacher teacher, Errors errors) {
-        if (errors.hasErrors()) {
-            return ResponseEntity.status(400).body(new ApiResponse(errors.getFieldError().getDefaultMessage()));
-        }
-
+    public int updateTeacher(String id, Teacher teacher) {
         for (int i = 0; i < teachers.size(); i++) {
             if (teachers.get(i).getId().equals(id)) {
                 teacher.setId(id);
                 teachers.set(i, teacher);
-                return ResponseEntity.status(200).body(new ApiResponse("Teacher updated successfully"));
+                return 1;
             }
         }
 
-        return ResponseEntity.status(400).body(new ApiResponse("Teacher not found"));
+        return 0;
     }
 
-    public ResponseEntity<?> deleteTeacher(String id) {
+    public int deleteTeacher(String id) {
         for (int i = 0; i < teachers.size(); i++) {
             if (teachers.get(i).getId().equals(id)) {
                 teachers.remove(i);
-                return ResponseEntity.status(200).body(new ApiResponse("Teacher deleted successfully"));
+                return 1;
             }
         }
 
-        return ResponseEntity.status(400).body(new ApiResponse("Teacher not found"));
+        return 0;
     }
 
-    public ResponseEntity<?> getTeacherCourses(String teacherId) {
+    public ArrayList<Course> getTeacherCourses(String teacherId) {
         ArrayList<Course> result = new ArrayList<>();
 
         for (Course course : courseService.getCoursesList()) {
@@ -75,56 +64,58 @@ public class TeacherService {
             }
         }
 
-        return ResponseEntity.status(200).body(result);
+        return result;
     }
 
-    public ResponseEntity<?> teacherAddAssignment(String teacherId, String courseId, Assignment assignment, Errors errors) {
-        if (errors.hasErrors()) {
-            return ResponseEntity.status(400).body(new ApiResponse(errors.getFieldError().getDefaultMessage()));
-        }
-
+    public int teacherAddAssignment(String teacherId, String courseId, Assignment assignment) {
         Course course = courseService.findCourse(courseId);
 
         if (course == null) {
-            return ResponseEntity.status(400).body(new ApiResponse("Course not found"));
+            return -1;
         }
 
         if (!course.getTeacherId().equals(teacherId)) {
-            return ResponseEntity.status(400).body(new ApiResponse("Teacher does not teach this course"));
+            return -2;
         }
 
         assignment.setTeacherId(teacherId);
         assignment.setCourseId(courseId);
 
-        return assignmentService.addAssignment(assignment, errors);
+        int result = assignmentService.addAssignment(assignment);
+
+        if (result == 0) {
+            return -3;
+        }
+
+        return 1;
     }
 
-    public ResponseEntity<?> gradeAssignment(String teacherId, String studentId, String courseId, int points) {
+    public int gradeAssignment(String teacherId, String studentId, String courseId, int points) {
         if (points < 0 || points > 30) {
-            return ResponseEntity.status(400).body(new ApiResponse("Assignment points must be between 0 and 30"));
+            return -1;
         }
 
         Course course = courseService.findCourse(courseId);
 
         if (course == null) {
-            return ResponseEntity.status(400).body(new ApiResponse("Course not found"));
+            return -2;
         }
 
         if (!course.getTeacherId().equals(teacherId)) {
-            return ResponseEntity.status(400).body(new ApiResponse("Teacher does not teach this course"));
+            return -3;
         }
 
         for (Enrollment enrollment : enrollmentService.getEnrollmentsList()) {
             if (enrollment.getStudentId().equals(studentId) && enrollment.getCourseId().equals(courseId)) {
                 enrollment.setAssignmentPoints(points);
-                return ResponseEntity.status(200).body(new ApiResponse("Assignment graded successfully"));
+                return 1;
             }
         }
 
-        return ResponseEntity.status(400).body(new ApiResponse("Enrollment not found"));
+        return 0;
     }
 
-    public ResponseEntity<?> getTeacherStudents(String teacherId) {
+    public ArrayList<Student> getTeacherStudents(String teacherId) {
         ArrayList<Student> result = new ArrayList<>();
 
         for (Course course : courseService.getCoursesList()) {
@@ -132,6 +123,7 @@ public class TeacherService {
                 for (Enrollment enrollment : enrollmentService.getEnrollmentsList()) {
                     if (enrollment.getCourseId().equals(course.getId())) {
                         Student student = studentService.findStudent(enrollment.getStudentId());
+
                         if (student != null) {
                             result.add(student);
                         }
@@ -140,7 +132,7 @@ public class TeacherService {
             }
         }
 
-        return ResponseEntity.status(200).body(result);
+        return result;
     }
 
     public Teacher findTeacher(String teacherId) {

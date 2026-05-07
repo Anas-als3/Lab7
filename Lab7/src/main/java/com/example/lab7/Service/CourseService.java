@@ -1,11 +1,8 @@
 package com.example.lab7.Service;
 
-import com.example.lab7.ApiResponse.ApiResponse;
 import com.example.lab7.Model.Course;
 import lombok.Getter;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.Errors;
 
 import java.util.ArrayList;
 
@@ -15,53 +12,45 @@ public class CourseService {
 
     private final ArrayList<Course> coursesList = new ArrayList<>();
 
-    public ResponseEntity<?> getCourses() {
-        return ResponseEntity.status(200).body(coursesList);
+    public ArrayList<Course> getCourses() {
+        return coursesList;
     }
 
-    public ResponseEntity<?> addCourse(Course course, Errors errors) {
-        if (errors.hasErrors()) {
-            return ResponseEntity.status(400).body(new ApiResponse(errors.getFieldError().getDefaultMessage()));
-        }
-
+    public int addCourse(Course course) {
         for (Course c : coursesList) {
             if (c.getId().equals(course.getId())) {
-                return ResponseEntity.status(400).body(new ApiResponse("Course id already exists"));
+                return 0;
             }
         }
 
         coursesList.add(course);
-        return ResponseEntity.status(200).body(new ApiResponse("Course added successfully"));
+        return 1;
     }
 
-    public ResponseEntity<?> updateCourse(String id, Course course, Errors errors) {
-        if (errors.hasErrors()) {
-            return ResponseEntity.status(400).body(new ApiResponse(errors.getFieldError().getDefaultMessage()));
-        }
-
+    public int updateCourse(String id, Course course) {
         for (int i = 0; i < coursesList.size(); i++) {
             if (coursesList.get(i).getId().equals(id)) {
                 course.setId(id);
                 coursesList.set(i, course);
-                return ResponseEntity.status(200).body(new ApiResponse("Course updated successfully"));
+                return 1;
             }
         }
 
-        return ResponseEntity.status(400).body(new ApiResponse("Course not found"));
+        return 0;
     }
 
-    public ResponseEntity<?> deleteCourse(String id) {
+    public int deleteCourse(String id) {
         for (int i = 0; i < coursesList.size(); i++) {
             if (coursesList.get(i).getId().equals(id)) {
                 coursesList.remove(i);
-                return ResponseEntity.status(200).body(new ApiResponse("Course deleted successfully"));
+                return 1;
             }
         }
 
-        return ResponseEntity.status(400).body(new ApiResponse("Course not found"));
+        return 0;
     }
 
-    public ResponseEntity<?> getCoursesByMajor(String major) {
+    public ArrayList<Course> getCoursesByMajor(String major) {
         ArrayList<Course> result = new ArrayList<>();
 
         for (Course course : coursesList) {
@@ -70,10 +59,10 @@ public class CourseService {
             }
         }
 
-        return ResponseEntity.status(200).body(result);
+        return result;
     }
 
-    public ResponseEntity<?> getGeneralCourses() {
+    public ArrayList<Course> getGeneralCourses() {
         ArrayList<Course> result = new ArrayList<>();
 
         for (Course course : coursesList) {
@@ -82,18 +71,18 @@ public class CourseService {
             }
         }
 
-        return ResponseEntity.status(200).body(result);
+        return result;
     }
 
-    public ResponseEntity<?> assignTeacher(String courseId, String teacherId) {
+    public int assignTeacher(String courseId, String teacherId) {
         Course course = findCourse(courseId);
 
         if (course == null) {
-            return ResponseEntity.status(400).body(new ApiResponse("Course not found"));
+            return 0;
         }
 
         course.setTeacherId(teacherId);
-        return ResponseEntity.status(200).body(new ApiResponse("Teacher assigned successfully"));
+        return 1;
     }
 
     public Course findCourse(String courseId) {

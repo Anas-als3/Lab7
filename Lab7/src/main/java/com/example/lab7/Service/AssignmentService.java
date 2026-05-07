@@ -1,11 +1,8 @@
 package com.example.lab7.Service;
 
-import com.example.lab7.ApiResponse.ApiResponse;
 import com.example.lab7.Model.Assignment;
 import lombok.Getter;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.Errors;
 
 import java.util.ArrayList;
 
@@ -15,53 +12,45 @@ public class AssignmentService {
 
     private final ArrayList<Assignment> assignmentsList = new ArrayList<>();
 
-    public ResponseEntity<?> getAssignments() {
-        return ResponseEntity.status(200).body(assignmentsList);
+    public ArrayList<Assignment> getAssignments() {
+        return assignmentsList;
     }
 
-    public ResponseEntity<?> addAssignment(Assignment assignment, Errors errors) {
-        if (errors.hasErrors()) {
-            return ResponseEntity.status(400).body(new ApiResponse(errors.getFieldError().getDefaultMessage()));
-        }
-
+    public int addAssignment(Assignment assignment) {
         for (Assignment a : assignmentsList) {
             if (a.getId().equals(assignment.getId())) {
-                return ResponseEntity.status(400).body(new ApiResponse("Assignment id already exists"));
+                return 0;
             }
         }
 
         assignmentsList.add(assignment);
-        return ResponseEntity.status(200).body(new ApiResponse("Assignment added successfully"));
+        return 1;
     }
 
-    public ResponseEntity<?> updateAssignment(String id, Assignment assignment, Errors errors) {
-        if (errors.hasErrors()) {
-            return ResponseEntity.status(400).body(new ApiResponse(errors.getFieldError().getDefaultMessage()));
-        }
-
+    public int updateAssignment(String id, Assignment assignment) {
         for (int i = 0; i < assignmentsList.size(); i++) {
             if (assignmentsList.get(i).getId().equals(id)) {
                 assignment.setId(id);
                 assignmentsList.set(i, assignment);
-                return ResponseEntity.status(200).body(new ApiResponse("Assignment updated successfully"));
+                return 1;
             }
         }
 
-        return ResponseEntity.status(400).body(new ApiResponse("Assignment not found"));
+        return 0;
     }
 
-    public ResponseEntity<?> deleteAssignment(String id) {
+    public int deleteAssignment(String id) {
         for (int i = 0; i < assignmentsList.size(); i++) {
             if (assignmentsList.get(i).getId().equals(id)) {
                 assignmentsList.remove(i);
-                return ResponseEntity.status(200).body(new ApiResponse("Assignment deleted successfully"));
+                return 1;
             }
         }
 
-        return ResponseEntity.status(400).body(new ApiResponse("Assignment not found"));
+        return 0;
     }
 
-    public ResponseEntity<?> getAssignmentsByCourse(String courseId) {
+    public ArrayList<Assignment> getAssignmentsByCourse(String courseId) {
         ArrayList<Assignment> result = new ArrayList<>();
 
         for (Assignment assignment : assignmentsList) {
@@ -70,10 +59,10 @@ public class AssignmentService {
             }
         }
 
-        return ResponseEntity.status(200).body(result);
+        return result;
     }
 
-    public ResponseEntity<?> getAssignmentsByTeacher(String teacherId) {
+    public ArrayList<Assignment> getAssignmentsByTeacher(String teacherId) {
         ArrayList<Assignment> result = new ArrayList<>();
 
         for (Assignment assignment : assignmentsList) {
@@ -82,33 +71,33 @@ public class AssignmentService {
             }
         }
 
-        return ResponseEntity.status(200).body(result);
+        return result;
     }
 
-    public ResponseEntity<?> changeDeadline(String assignmentId, String deadline) {
+    public int changeDeadline(String assignmentId, String deadline) {
         Assignment assignment = findAssignment(assignmentId);
 
         if (assignment == null) {
-            return ResponseEntity.status(400).body(new ApiResponse("Assignment not found"));
+            return 0;
         }
 
         assignment.setDeadline(deadline);
-        return ResponseEntity.status(200).body(new ApiResponse("Deadline changed successfully"));
+        return 1;
     }
 
-    public ResponseEntity<?> changeAssignmentMaxPoints(String assignmentId, int points) {
+    public int changeAssignmentMaxPoints(String assignmentId, int points) {
         if (points < 1 || points > 30) {
-            return ResponseEntity.status(400).body(new ApiResponse("Assignment max points must be between 1 and 30"));
+            return -1;
         }
 
         Assignment assignment = findAssignment(assignmentId);
 
         if (assignment == null) {
-            return ResponseEntity.status(400).body(new ApiResponse("Assignment not found"));
+            return 0;
         }
 
         assignment.setMaxPoints(points);
-        return ResponseEntity.status(200).body(new ApiResponse("Assignment max points changed successfully"));
+        return 1;
     }
 
     public Assignment findAssignment(String assignmentId) {
